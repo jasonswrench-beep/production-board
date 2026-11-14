@@ -9,3 +9,4 @@ server/target/
 deploy/
 # A copy of a real board, used by the tests; it stays on this computer.
 src-tauri/tests/fixtures/
+mac-installer/
