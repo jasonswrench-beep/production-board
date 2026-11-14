@@ -1,0 +1,27 @@
+[package]
+name = "production-board-server"
+version = "1.5.0"
+description = "The board on a server: sync hub, web page and remote agent tools"
+authors = ["Jason S. Wrench"]
+edition = "2021"
+rust-version = "1.89"
+
+[dependencies]
+board-core = { path = "../core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tiny_http = "0.12"
+sha2 = "0.10"
+argon2 = "0.5"
+getrandom = "0.2"
+chrono = "0.4"
+
+[dev-dependencies]
+board-core = { path = "../core", features = ["client"] }
+ureq = { version = "2.12", features = ["json"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

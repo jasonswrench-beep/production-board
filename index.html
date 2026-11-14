@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Production Board</title>
+<script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+<div class="app" id="app">
+<main class="main" id="main">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Production Board</h1>
+      <div class="tally" id="tally" aria-live="polite"><span>Everything in flight, by track and stage.</span></div>
+    </div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Find a project" aria-label="Find a project">
+      <div class="seg" role="group" aria-label="View">
+        <button class="btn" id="v-board" type="button" aria-pressed="true">Board</button>
+        <button class="btn" id="v-cal" type="button" aria-pressed="false">Calendar</button>
+      </div>
+      <button class="btn primary" id="add" type="button">Add item</button>
+      <button class="btn" id="assist-toggle" type="button" aria-pressed="false" aria-controls="assist">Assistant</button>
+      <button class="btn quiet syncpill" id="sync-pill" type="button" hidden><span class="dot" aria-hidden="true"></span><span id="sync-text">Synced</span></button>
+      <button class="btn quiet" id="open-settings" type="button">Settings</button>
+      <button class="btn quiet" id="web-signout" type="button" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <section class="welcome" id="welcome" hidden aria-labelledby="w-h">
+    <h2 id="w-h">Start the board</h2>
+    <p>The board keeps everything in one file on this computer. Bring in your existing records, or start with an empty board and add items as you go.</p>
+    <fieldset class="sections">
+      <legend>Sections on your board</legend>
+      <p class="hint">Untick the ones you won't use. You can change this later in Settings.</p>
+      <div class="tracks" id="w-sections"></div>
+    </fieldset>
+    <p id="w-seed" hidden>Found <span class="path" id="w-seed-path"></span></p>
+    <div class="actions">
+      <button class="btn primary" type="button" id="w-import-seed" hidden>Import the seed file</button>
+      <button class="btn" type="button" id="w-import">Choose a board file</button>
+      <button class="btn quiet" type="button" id="w-empty">Start with an empty board</button>
+    </div>
+    <p class="msg" id="w-msg" hidden></p>
+  </section>
+
+  <div class="note" id="note" hidden>
+    <p>Stages and next steps were filled in from past work sessions, so some will be behind. Drag a card to another column to change its stage, or into another section to move it there. Open a card to correct anything else. Any agent session connected to the board can update it at the end of a work session.</p>
+    <button type="button" id="note-x">Got it</button>
+  </div>
+
+  <section class="week" id="week" aria-label="This week">
+    <div class="list"><h2>Closest to finished</h2><p class="why">One or two stages from done.</p><ol id="l-close"></ol></div>
+    <div class="list"><h2>Due dates</h2><p class="why">Deadlines, release dates and terms.</p><ol id="l-due"></ol></div>
+    <div class="list"><h2>Gone cold</h2><p class="why">Unfinished, and not logged in 45 days or more.</p><ol id="l-cold"></ol></div>
+  </section>
+
+  <nav class="filters" id="filters" aria-label="Tracks"></nav>
+  <p class="status" id="status">Loading the board.</p>
+  <div id="boards"></div>
+
+  <section class="cal" id="cal" hidden aria-label="Calendar">
+    <div class="week">
+      <div class="list"><h2>Late</h2><p class="why">Past the due date and not finished.</p><ol id="c-late"></ol></div>
+      <div class="list"><h2>This week</h2><p class="why" id="c-this-why">Due by Saturday.</p><ol id="c-this"></ol></div>
+      <div class="list"><h2>Next week</h2><p class="why" id="c-next-why">Due the week after.</p><ol id="c-next"></ol></div>
+    </div>
+    <div class="calhead">
+      <h2 id="cal-title" aria-live="polite">Month</h2>
+      <div class="inline">
+        <button class="btn small" type="button" id="cal-prev" aria-label="Previous month">&#8249; Previous</button>
+        <button class="btn small" type="button" id="cal-today">This month</button>
+        <button class="btn small" type="button" id="cal-next" aria-label="Next month">Next &#8250;</button>
+      </div>
+    </div>
+    <div class="calgrid" id="cal-grid"></div>
+    <ol class="calagenda" id="cal-agenda"></ol>
+    <div class="undated" id="cal-undated" hidden></div>
+  </section>
+</div>
+</main>
+
+<aside class="assist" id="assist" hidden aria-label="Assistant">
+  <div class="ahead">
+    <h2>Assistant</h2>
+    <span class="amode" id="a-mode"></span>
+    <button class="btn small quiet" type="button" id="a-reset">New conversation</button>
+    <button class="btn small quiet" type="button" id="a-close" aria-label="Close the assistant">Close</button>
+  </div>
+  <div class="alog" id="a-log" aria-live="polite"></div>
+  <form class="ainput" id="a-form">
+    <textarea id="a-text" rows="3" placeholder="Ask about the board, or say what changed" aria-label="Message to the assistant"></textarea>
+    <div class="actions">
+      <small class="hint">Enter sends, Shift+Enter adds a line.</small>
+      <span class="sp"></span>
+      <button class="btn" type="button" id="a-stop" hidden>Stop</button>
+      <button class="btn primary" type="submit" id="a-send">Send</button>
+    </div>
+  </form>
+</aside>
+</div>
+
+<dialog id="dlg" aria-labelledby="d-h">
+  <form class="dform" id="dform" method="dialog">
+    <h2 id="d-h">Project</h2>
+    <div class="grid2">
+      <div class="f wide"><label for="f-title">Title</label><input id="f-title" required maxlength="160"></div>
+      <div class="f"><label for="f-track">Track</label><select id="f-track"></select></div>
+      <div class="f"><label for="f-stage">Stage</label><select id="f-stage"></select></div>
+      <div class="f"><label for="f-dueDate">Due date</label><input id="f-dueDate" type="date" aria-describedby="f-due-hint"><small id="f-due-hint">Optional. Cards with a due date show on the calendar.</small></div>
+      <div class="f"><label for="f-dueLabel">What the date is for</label><input id="f-dueLabel" maxlength="120" placeholder="Release day, end of term, proof due"></div>
+      <div class="f"><label for="f-kind">What it is</label><input id="f-kind" maxlength="160" placeholder="M/M hockey romance, craft book, desktop tool"></div>
+      <div class="f"><label for="f-byline">Byline</label><input id="f-byline" maxlength="80" placeholder="Pen name, if any"></div>
+      <div class="f wide"><label for="f-status">Where it stands</label><textarea id="f-status" rows="2" maxlength="600"></textarea></div>
+      <div class="f wide"><label for="f-next">Next step</label><textarea id="f-next" rows="2" maxlength="600"></textarea></div>
+      <div class="f wide"><label for="f-open">Waiting on a decision from you</label><textarea id="f-open" rows="3" maxlength="2000"></textarea><small>One per line.</small></div>
+      <div class="f wide"><label for="f-decisions">Standing decisions</label><textarea id="f-decisions" rows="4" maxlength="3000"></textarea><small>One per line. These are the choices a new session should not reopen.</small></div>
+      <div class="f"><label for="f-words">Length</label><input id="f-words" maxlength="60" placeholder="68k words"></div>
+      <div class="f"><label for="f-touched">Last logged</label><input id="f-touched" type="date"></div>
+      <div class="f wide"><label for="f-files">Where the files live</label><input id="f-files" maxlength="300" placeholder="Folder path, and which computer"></div>
+      <div class="f wide"><label for="f-links">Links</label><textarea id="f-links" rows="2" maxlength="3000" spellcheck="false"></textarea><small>One per line: a web address, or a label, then a bar, then the address (Spec | https://…). For notes, decisions and sources kept elsewhere.</small></div>
+    </div>
+    <ul class="log" id="d-log" aria-label="Activity"></ul>
+    <p class="msg" id="d-msg" hidden></p>
+    <div class="confirm" id="d-confirm" hidden>
+      <p>Remove this project from the board? This cannot be undone.</p>
+      <button class="btn danger" type="button" id="d-remove-yes">Remove</button>
+      <button class="btn" type="button" id="d-remove-no">Keep it</button>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit" id="d-save">Save</button>
+      <button class="btn" type="button" id="d-today">Worked on it today</button>
+      <button class="btn" type="button" id="d-advance">Advance</button>
+      <span class="sp"></span>
+      <button class="btn quiet danger" type="button" id="d-remove">Remove</button>
+      <button class="btn quiet" type="button" id="d-cancel">Close</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="sdlg" aria-labelledby="s-h">
+  <form class="dform" id="sform" method="dialog">
+    <h2 id="s-h">Settings</h2>
+
+    <div class="set">
+      <h3>Assistant</h3>
+      <div class="modes" role="radiogroup" aria-label="How the assistant connects">
+        <label><input type="radio" name="mode" value="off"><span>Off<small>The board works fully without it.</small></span></label>
+        <label><input type="radio" name="mode" value="agent"><span>Installed coding agent<small>Hands requests to the command-line coding agent already signed in on this PC. Uses your existing plan; this app never sees your sign-in.</small></span></label>
+        <label><input type="radio" name="mode" value="api"><span>Your own API key<small>Calls the model API directly with a key you paste here. The key is kept in this computer's secure credential store.</small></span></label>
+      </div>
+
+      <div id="s-agent" class="set" hidden>
+        <p class="hint" id="s-agent-found"></p>
+        <div class="f"><span class="lab">Sign-in</span>
+          <p class="hint" id="s-agent-auth">Checking…</p>
+          <div class="inline"><button class="btn small" type="button" id="s-agent-signin">Sign in to the agent</button><button class="btn small quiet" type="button" id="s-agent-recheck">Check again</button></div>
+        </div>
+        <div class="f"><label for="s-agent-path">Program location</label>
+          <div class="inline"><input id="s-agent-path" placeholder="Leave empty to find it automatically"><button class="btn small" type="button" id="s-agent-browse">Browse</button><button class="btn small" type="button" id="s-agent-test">Test</button></div>
+        </div>
+        <div class="f"><span class="lab">Every work session</span>
+          <p class="hint">Register the board's tools with the coding agent so any of its sessions on this PC (editing, grading, coding) can log progress and move cards when it finishes.</p>
+          <div class="inline"><button class="btn small" type="button" id="s-connect">Connect the board to the agent</button></div>
+        </div>
+        <p class="msg" id="s-agent-msg" hidden></p>
+      </div>
+
+      <div id="s-api" class="set" hidden>
+        <p class="hint" id="s-key-state"></p>
+        <div class="f"><label for="s-key">API key</label>
+          <div class="inline"><input id="s-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a key to store it"><button class="btn small" type="button" id="s-key-save">Save key</button><button class="btn small quiet danger" type="button" id="s-key-clear">Remove key</button></div>
+        </div>
+        <div class="grid2">
+          <div class="f"><label for="s-model">Model</label><input id="s-model" spellcheck="false"></div>
+          <div class="f"><label for="s-effort">Effort</label><select id="s-effort"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        </div>
+        <p class="msg" id="s-api-msg" hidden></p>
+      </div>
+    </div>
+
+    <div class="set">
+      <h3>Sync</h3>
+      <p class="hint" id="s-sync-state">Sync is off. The board stays on this computer only.</p>
+      <div id="s-sync-setup">
+        <div class="f"><label for="s-sync-server">Server address</label><input id="s-sync-server" spellcheck="false" placeholder="board.example.com"></div>
+        <div class="f"><label for="s-sync-key">Access key</label>
+          <div class="inline"><input id="s-sync-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the server's access key"><button class="btn small" type="button" id="s-sync-connect">Turn on sync</button></div>
+        </div>
+      </div>
+      <div id="s-sync-on" hidden>
+        <div class="actions">
+          <button class="btn small" type="button" id="s-sync-now">Sync now</button>
+          <button class="btn small" type="button" id="s-sync-copy">Copy access key</button>
+          <button class="btn small quiet danger" type="button" id="s-sync-off">Turn off sync</button>
+        </div>
+        <div class="f"><label for="s-web-pw">Web page password</label>
+          <p class="hint">Open the board in any browser at <a id="s-web-url" target="_blank" rel="noopener"></a> and sign in with this password. Setting a new one signs every browser out.</p>
+          <div class="inline"><input id="s-web-pw" type="password" autocomplete="new-password" placeholder="At least 10 characters"><button class="btn small" type="button" id="s-web-pw-save">Set password</button></div>
+        </div>
+        <div class="f"><span class="lab">Agent sessions elsewhere</span>
+          <p class="hint">Agent sessions on other computers or in the cloud can use the board's tools at <span class="mono" id="s-mcp-url"></span>, sending the access key as a bearer token.</p>
+        </div>
+        <div class="f"><span class="lab" id="s-keys-h">Access keys for other tools</span>
+          <p class="hint">Give another tool its own key instead of the main one. A key can be read-only and can be limited to some tracks. It reaches only the board's tools and the change feed, never sync, the web password or these keys. Revoking a key shuts it out at once.</p>
+          <ul class="keylist" id="s-keys" aria-labelledby="s-keys-h"></ul>
+          <fieldset class="newkey">
+            <legend>New key</legend>
+            <div class="f"><label for="s-k-name">Name</label><input id="s-k-name" maxlength="60" placeholder="The tool that will use it" autocomplete="off"></div>
+            <label class="check"><input type="checkbox" id="s-k-write"> It can add, change and move cards (otherwise read-only)</label>
+            <label class="check"><input type="checkbox" id="s-k-all" checked> Every track</label>
+            <div class="tracks" id="s-k-tracks" hidden></div>
+            <div class="actions"><button class="btn small" type="button" id="s-k-make">Make key</button></div>
+            <div class="f" id="s-k-new" hidden>
+              <label for="s-k-value">The new key</label>
+              <p class="hint">Copy it now into the tool that will use it. It won't be shown again; the server keeps only a fingerprint.</p>
+              <div class="inline"><input id="s-k-value" readonly spellcheck="false" class="mono"><button class="btn small" type="button" id="s-k-copy">Copy</button></div>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+      <p class="msg" id="s-sync-msg" hidden></p>
+    </div>
+
+    <div class="set">
+      <h3>Sections</h3>
+      <p class="hint">Choose which sections show on the board on this computer. A section that has cards on it always shows.</p>
+      <div class="tracks" id="s-sections"></div>
+    </div>
+
+    <div class="set">
+      <h3>Board data</h3>
+      <p class="pathline" id="s-path"></p>
+      <p class="hint">One file holds the whole board. A copy of the previous day's file is kept in the backups folder beside it.</p>
+      <div class="actions">
+        <button class="btn small" type="button" id="s-reveal">Show in folder</button>
+        <button class="btn small" type="button" id="s-export">Export the board</button>
+        <button class="btn small" type="button" id="s-import">Import a board file</button>
+      </div>
+      <p class="msg" id="s-data-msg" hidden></p>
+    </div>
+
+    <div class="set">
+      <h3>Other agents</h3>
+      <p class="hint">Any tool that speaks MCP over stdio can use the board with this server entry:</p>
+      <pre class="snippet" id="s-snippet"></pre>
+    </div>
+
+    <div class="actions"><span class="sp"></span><button class="btn primary" type="submit" id="s-done">Done</button></div>
+  </form>
+</dialog>
+
+<dialog id="cdlg" aria-labelledby="c-h">
+  <form class="dform" id="cform" method="dialog">
+    <h2 id="c-h">Changed in two places</h2>
+    <p class="hint">These cards were changed on this computer and somewhere else (the web page, another computer or an agent session) in ways that can't be combined. Choose the version to keep for each; it replaces the other everywhere.</p>
+    <div id="c-body" class="conflicts"></div>
+    <div class="actions"><span class="sp"></span><button class="btn" type="submit">Decide later</button></div>
+  </form>
+</dialog>
+</body>
+</html>

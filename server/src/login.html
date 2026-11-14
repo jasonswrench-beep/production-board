@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Production Board</title>
+<style>
+  :root { --bg: #f4f1ea; --card: #fffdf8; --ink: #1f1d1a; --mute: #6b655c; --line: #ddd6c8; --accent: #2f5d50; --err: #9b2c2c; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #171614; --card: #201f1c; --ink: #ece7dd; --mute: #a39c90; --line: #3a372f; --accent: #7fb7a4; --err: #f0a0a0; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 16px; }
+  form { width: 100%; max-width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px 24px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  p { margin: 0 0 20px; color: var(--mute); font-size: 14px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; }
+  input { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+  button { margin-top: 16px; width: 100%; font: inherit; font-weight: 600; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: var(--card); cursor: pointer; }
+  button:disabled { opacity: .6; }
+  .msg { margin-top: 14px; color: var(--err); font-size: 14px; min-height: 1.5em; }
+</style>
+</head>
+<body>
+<form id="f">
+  <h1>Production Board</h1>
+  <p>Sign in to see the board.</p>
+  <label for="pw">Password</label>
+  <input id="pw" type="password" autocomplete="current-password" required autofocus>
+  <button id="go" type="submit">Sign in</button>
+  <div class="msg" id="msg" role="alert"></div>
+</form>
+<script>
+  const f = document.getElementById("f"), msg = document.getElementById("msg"), go = document.getElementById("go");
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault(); msg.textContent = ""; go.disabled = true;
+    try {
+      const r = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: document.getElementById("pw").value }) });
+      if (r.ok) { location.href = "/"; return; }
+      const j = await r.json().catch(() => ({}));
+      msg.textContent = j.error || "That didn't work. Try again.";
+    } catch { msg.textContent = "Couldn't reach the server."; }
+    go.disabled = false;
+  });
+</script>
+</body>
+</html>

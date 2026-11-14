@@ -1,0 +1,11 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+*.log
+core/target/
+server/target/
+.claude/
+deploy/
+# A copy of a real board, used by the tests; it stays on this computer.
+src-tauri/tests/fixtures/
